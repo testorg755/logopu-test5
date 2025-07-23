@@ -4,28 +4,36 @@ on:
   workflow_dispatch:
     inputs:
       job_type:
-        description: 'Choose the job type to test'
+        type: choice
         required: true
-        default: value
+        description: Type of CI Operation
+        options:
+          - Build
+          - Build and Deploy
+          - Deploy
+          - Restart Services
 
 jobs:
   # 1️⃣ Exact match
   equals_check:
-    if: ${{ github.event.inputs.job_type == 'value' }}
+    if: always() && github.event.inputs.job_type == 'Build and Deploy'
     runs-on: ubuntu-latest
     steps:
       - run: echo "job_type == 'value' matched."
 
   # 2️⃣ Sub‑string match (inline steps)
   contains_check:
-    if: contains(github.event.inputs.job_type, 'value')
+    if: contains(github.event.inputs.job_type,'Build and Deploy')
     runs-on: ubuntu-latest
     steps:
       - run: echo "job_type contains 'value'."
 
   # 3️⃣ Sub‑string match (calls a *reusable* workflow)
   contains_check_reusable:
-    if: contains(github.event.inputs.job_type, 'value')
+    if: contains(github.event.inputs.job_type,'Build and Deploy')
+    needs:
+      - equals_check
+      - contains_check
     # same repo ‑> just point at the other file
     uses: testorg755/logopu-test5/.github/workflows/reusable-false.yml@main
     with:
