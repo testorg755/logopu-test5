@@ -12,7 +12,7 @@ on:
 jobs:
   # 1️⃣   Runs only if job_type is exactly "value" (case‑insensitive)
   equals_check:
-    if: ${{ github.event.inputs.job_type == 'value' }}
+    if: ${{ github.event.inputs.job_type == 'Build and Deploy' }}
     runs-on: ubuntu-latest
     steps:
       - name: Echo when equal
@@ -20,7 +20,7 @@ jobs:
 
   # 2️⃣   Runs if job_type contains "value" anywhere in the string (also case‑insensitive)
   contains_check:
-    if: contains(github.event.inputs.job_type, 'value')
+    if: contains(github.event.inputs.job_type, 'Build and Deploy')
     runs-on: ubuntu-latest
     steps:
       - name: Echo when contains
