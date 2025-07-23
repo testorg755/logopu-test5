@@ -22,3 +22,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "job_type contains 'value'."
+
+  # 3️⃣ Sub‑string match (calls a *reusable* workflow)
+  contains_check_reusable:
+    if: contains(github.event.inputs.job_type, 'value')
+    # same repo ‑> just point at the other file
+    uses: ./.github/workflows/reusable-false.yml
+    with:
+      job_type: ${{ github.event.inputs.job_type }}
