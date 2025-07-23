@@ -1,0 +1,17 @@
+name: Reusable workflow that always resolves to false
+
+on:
+  workflow_call:
+    inputs:
+      job_type:
+        required: false
+        type: string
+
+jobs:
+  never_runs:
+    # Force this job (and therefore the whole called workflow)
+    # to be skipped, regardless of the caller’s input.
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "You should never see this."
