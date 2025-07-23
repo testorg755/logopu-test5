@@ -1,7 +1,6 @@
 name: Test job_type comparisons
 
 on:
-  # Manually trigger the workflow and pass a job_type value from the UI or API
   workflow_dispatch:
     inputs:
       job_type:
@@ -10,18 +9,24 @@ on:
         default: value
 
 jobs:
-  # 1️⃣   Runs only if job_type is exactly "value" (case‑insensitive)
+  # 1️⃣ Exact match
   equals_check:
-    if: ${{ github.event.inputs.job_type == 'Build and Deploy' }}
+    if: ${{ github.event.inputs.job_type == 'value' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Echo when equal
-        run: echo "job_type == 'value' matched. Running equals_check job."
+      - run: echo "job_type == 'value' matched."
 
-  # 2️⃣   Runs if job_type contains "value" anywhere in the string (also case‑insensitive)
+  # 2️⃣ Sub‑string match (inline steps)
   contains_check:
-    if: contains(github.event.inputs.job_type, 'Build and Deploy')
+    if: contains(github.event.inputs.job_type, 'value')
     runs-on: ubuntu-latest
     steps:
-      - name: Echo when contains
-        run: echo "job_type contains 'value'. Running contains_check job."
+      - run: echo "job_type contains 'value'."
+
+  # 3️⃣ Sub‑string match (calls a *reusable* workflow)
+  contains_check_reusable:
+    if: contains(github.event.inputs.job_type, 'value')
+    # same repo ‑> just point at the other file
+    uses: ./.github/workflows/reusable-false.yml
+    with:
+      job_type: ${{ github.event.inputs.job_type }}
