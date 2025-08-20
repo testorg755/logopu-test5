@@ -1,30 +1,25 @@
 name: Repro sparse-checkout persistence
-
 on:
   workflow_dispatch:
-
-env:
-  # A directory one level ABOVE the per-job GITHUB_WORKSPACE so it survives job cleanup
-  REPRO_DIR: ../sparse-repro
 
 jobs:
   job_a_sparse:
     name: Job A - enable sparse-checkout
-    runs-on: [self-hosted, linux, sparse-lab]  # <-- use a label that only one runner has
+    runs-on: [self-hosted, linux, sparse-lab]  # use a label tied to exactly one runner
     steps:
       - name: Checkout (sparse)
         uses: actions/checkout@v4
         with:
-          # checkout to a persistent path outside the job's workspace
-          path: ${{ env.REPRO_DIR }}
           fetch-depth: 0
+          # optional: put it in a subdir that persists across jobs on self-hosted
+          path: persist/sparse-repro
           sparse-checkout: |
             .github
-          sparse-checkout-cone: true
+          sparse-checkout-cone-mode: true
 
       - name: Show sparse state after Job A
         run: |
-          cd "$REPRO_DIR"
+          cd "$GITHUB_WORKSPACE/persist/sparse-repro"
           echo "core.sparseCheckout=$(git config --local --get core.sparseCheckout || echo unset)"
           echo "patterns:"
           if [ -f .git/info/sparse-checkout ]; then cat .git/info/sparse-checkout; else echo "(none)"; fi
@@ -34,17 +29,17 @@ jobs:
   job_b_nosparse:
     name: Job B - plain checkout (should NOT be sparse, but will be)
     needs: job_a_sparse
-    runs-on: [self-hosted, linux, sparse-lab]  # same label to land on same runner
+    runs-on: [self-hosted, linux, sparse-lab]  # same label to hit the same machine
     steps:
       - name: Checkout (non-sparse) into the SAME dir
         uses: actions/checkout@v4
         with:
-          path: ${{ env.REPRO_DIR }}
           fetch-depth: 0
+          path: persist/sparse-repro
 
       - name: Inspect state in Job B
         run: |
-          cd "$REPRO_DIR"
+          cd "$GITHUB_WORKSPACE/persist/sparse-repro"
           echo "core.sparseCheckout=$(git config --local --get core.sparseCheckout || echo unset)"
           echo "patterns:"
           if [ -f .git/info/sparse-checkout ]; then cat .git/info/sparse-checkout; else echo "(none)"; fi
