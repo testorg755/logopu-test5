@@ -1,0 +1,52 @@
+name: Repro sparse-checkout persistence
+
+on:
+  workflow_dispatch:
+
+env:
+  # A directory one level ABOVE the per-job GITHUB_WORKSPACE so it survives job cleanup
+  REPRO_DIR: ../sparse-repro
+
+jobs:
+  job_a_sparse:
+    name: Job A - enable sparse-checkout
+    runs-on: [self-hosted, linux, sparse-lab]  # <-- use a label that only one runner has
+    steps:
+      - name: Checkout (sparse)
+        uses: actions/checkout@v4
+        with:
+          # checkout to a persistent path outside the job's workspace
+          path: ${{ env.REPRO_DIR }}
+          fetch-depth: 0
+          sparse-checkout: |
+            .github
+          sparse-checkout-cone: true
+
+      - name: Show sparse state after Job A
+        run: |
+          cd "$REPRO_DIR"
+          echo "core.sparseCheckout=$(git config --local --get core.sparseCheckout || echo unset)"
+          echo "patterns:"
+          if [ -f .git/info/sparse-checkout ]; then cat .git/info/sparse-checkout; else echo "(none)"; fi
+          echo "Top-level files visible:"
+          ls -la | sed -n '1,120p'
+
+  job_b_nosparse:
+    name: Job B - plain checkout (should NOT be sparse, but will be)
+    needs: job_a_sparse
+    runs-on: [self-hosted, linux, sparse-lab]  # same label to land on same runner
+    steps:
+      - name: Checkout (non-sparse) into the SAME dir
+        uses: actions/checkout@v4
+        with:
+          path: ${{ env.REPRO_DIR }}
+          fetch-depth: 0
+
+      - name: Inspect state in Job B
+        run: |
+          cd "$REPRO_DIR"
+          echo "core.sparseCheckout=$(git config --local --get core.sparseCheckout || echo unset)"
+          echo "patterns:"
+          if [ -f .git/info/sparse-checkout ]; then cat .git/info/sparse-checkout; else echo "(none)"; fi
+          echo "Visible files (expect to still be sparse):"
+          ls -la | sed -n '1,200p'
