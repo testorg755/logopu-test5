@@ -1,47 +1,56 @@
 name: Repro sparse-checkout persistence
-on:
-  workflow_dispatch:
+on: { workflow_dispatch: {} }
 
 jobs:
   job_a_sparse:
     name: Job A - enable sparse-checkout
-    runs-on: [self-hosted, linux, sparse-lab]  # use a label tied to exactly one runner
+    runs-on: [self-hosted, macOS, sparse-lab]  # your labels
     steps:
       - name: Checkout (sparse)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # optional: put it in a subdir that persists across jobs on self-hosted
           path: persist/sparse-repro
           sparse-checkout: |
             .github
           sparse-checkout-cone-mode: true
 
-      - name: Show sparse state after Job A
+      - name: Show state at end of Job A (before post step runs)
         run: |
           cd "$GITHUB_WORKSPACE/persist/sparse-repro"
-          echo "core.sparseCheckout=$(git config --local --get core.sparseCheckout || echo unset)"
-          echo "patterns:"
-          if [ -f .git/info/sparse-checkout ]; then cat .git/info/sparse-checkout; else echo "(none)"; fi
-          echo "Top-level files visible:"
-          ls -la | sed -n '1,120p'
+          echo "A/core.sparseCheckout=$(git config --local --get core.sparseCheckout || echo unset)"
+          echo "A/patterns:"
+          test -f .git/info/sparse-checkout && cat .git/info/sparse-checkout || echo "(none)"
 
-  job_b_nosparse:
-    name: Job B - plain checkout (should NOT be sparse, but will be)
+  job_b_probe_then_checkout:
+    name: Job B - probe BEFORE checkout, then plain checkout
     needs: job_a_sparse
-    runs-on: [self-hosted, linux, sparse-lab]  # same label to hit the same machine
+    runs-on: [self-hosted, macOS, sparse-lab]  # same runner label
     steps:
-      - name: Checkout (non-sparse) into the SAME dir
+      - name: Probe state BEFORE running checkout
+        run: |
+          DIR="$GITHUB_WORKSPACE/persist/sparse-repro"
+          echo "Workspace: $GITHUB_WORKSPACE"
+          if [ -d "$DIR/.git" ]; then
+            cd "$DIR"
+            echo "B-before/core.sparseCheckout=$(git config --local --get core.sparseCheckout || echo unset)"
+            echo "B-before/patterns:"
+            test -f .git/info/sparse-checkout && cat .git/info/sparse-checkout || echo "(none)"
+          else
+            echo "Repo dir not found: $DIR"
+          fi
+
+      - name: Checkout (non-sparse) into SAME dir
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           path: persist/sparse-repro
 
-      - name: Inspect state in Job B
+      - name: Probe state AFTER checkout
         run: |
           cd "$GITHUB_WORKSPACE/persist/sparse-repro"
-          echo "core.sparseCheckout=$(git config --local --get core.sparseCheckout || echo unset)"
-          echo "patterns:"
-          if [ -f .git/info/sparse-checkout ]; then cat .git/info/sparse-checkout; else echo "(none)"; fi
-          echo "Visible files (expect to still be sparse):"
+          echo "B-after/core.sparseCheckout=$(git config --local --get core.sparseCheckout || echo unset)"
+          echo "B-after/patterns:"
+          test -f .git/info/sparse-checkout && cat .git/info/sparse-checkout || echo "(none)"
+          echo "Visible files:"
           ls -la | sed -n '1,200p'
