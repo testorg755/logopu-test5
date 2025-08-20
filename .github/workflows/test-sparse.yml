@@ -7,13 +7,14 @@ jobs:
     runs-on: [self-hosted, macOS, sparse-lab]  # your labels
     steps:
       - name: Checkout (sparse)
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           path: persist/sparse-repro
           sparse-checkout: |
             .github
           sparse-checkout-cone-mode: true
+          clean: false
 
       - name: Show state at end of Job A (before post step runs)
         run: |
@@ -41,7 +42,7 @@ jobs:
           fi
 
       - name: Checkout (non-sparse) into SAME dir
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           path: persist/sparse-repro
