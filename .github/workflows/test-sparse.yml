@@ -46,6 +46,7 @@ jobs:
         with:
           fetch-depth: 0
           path: persist/sparse-repro
+          clean: false
 
       - name: Probe state AFTER checkout
         run: |
