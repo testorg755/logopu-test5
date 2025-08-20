@@ -13,7 +13,7 @@ jobs:
           path: persist/sparse-repro
           sparse-checkout: |
             .github
-          sparse-checkout-cone-mode: true
+          sparse-checkout-cone-mode: false
           clean: false
 
       - name: Show state at end of Job A (before post step runs)
@@ -46,7 +46,6 @@ jobs:
         with:
           fetch-depth: 0
           path: persist/sparse-repro
-          clean: false
 
       - name: Probe state AFTER checkout
         run: |
