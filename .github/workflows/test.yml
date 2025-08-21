@@ -1,0 +1,21 @@
+name: B after A (success only)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  job_a:
+    name: Job A
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Job A passed"
+
+  job_b:
+    name: Job B (runs only if A succeeded)
+    needs: job_a
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Job B running because Job A succeeded"
