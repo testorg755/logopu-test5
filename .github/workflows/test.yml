@@ -15,7 +15,6 @@ jobs:
 
   job_b:
     name: Job B (runs only if A succeeded)
-    if: ${{ needs.job_a.result == 'success'}}
     needs: job_a
     runs-on: ubuntu-latest
     steps:
