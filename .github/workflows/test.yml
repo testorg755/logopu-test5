@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "Job A passed"
+      - run: return 1
 
   job_b:
     name: Job B (runs only if A succeeded)
