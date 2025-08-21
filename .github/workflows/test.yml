@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: sleep 60
+      - run: sleep 5
 
   job_b:
     name: Job B (runs only if A succeeded)
-    if: ${{ needs.job_a.result != 'success' && success() }}
+    if: ${{ success() }}
     needs: job_a
     runs-on: ubuntu-latest
     steps:
