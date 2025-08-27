@@ -1,5 +1,4 @@
-name: B after A (success only)
-
+name: mac-test
 on:
   workflow_dispatch:
   push:
@@ -8,15 +7,7 @@ on:
 jobs:
   job_a:
     name: Job A
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - run: sleep 5
-
-  job_b:
-    name: Job B (runs only if A succeeded)
-    if: ${{ success() }}
-    needs: job_a
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Job B running because Job A succeeded"
