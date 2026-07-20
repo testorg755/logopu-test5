@@ -1,0 +1,159 @@
+name: Heavy composite
+description: >-
+  Emits a large volume of log lines across many composite steps to exercise the
+  workflow-run log viewer (github/c2c-actions#9641). Each composite step renders
+  as an independently expandable action bar.
+
+inputs:
+  lines_per_step:
+    description: Number of log lines each heavy step emits.
+    required: false
+    default: "20000"
+
+runs:
+  using: composite
+  steps:
+    # --- Perf: three heavy steps (~lines_per_step each) -----------------------
+    # Default 20000 x 3 heavy steps (+ nested) ~= 60k lines, matching the repro
+    # in the issue (composite emitting ~20k lines/step x 3 => ~57k total).
+    # `seq | awk` is far faster than a bash for-loop for tens of thousands of lines.
+    - name: Heavy step 1
+      shell: bash
+      run: |
+        echo "::group::Heavy step 1 output"
+        seq 1 "${{ inputs.lines_per_step }}" | awk '{print "step-1 line " $1 " - lorem ipsum dolor sit amet consectetur adipiscing elit"}'
+        echo "::endgroup::"
+
+    - name: Heavy step 2
+      shell: bash
+      run: |
+        echo "::group::Heavy step 2 output"
+        seq 1 "${{ inputs.lines_per_step }}" | awk '{print "step-2 line " $1 " - the quick brown fox jumps over the lazy dog"}'
+        echo "::endgroup::"
+
+    - name: Heavy step 3
+      shell: bash
+      run: |
+        echo "::group::Heavy step 3 output"
+        seq 1 "${{ inputs.lines_per_step }}" | awk '{print "step-3 line " $1 " - pack my box with five dozen liquor jugs"}'
+        echo "::endgroup::"
+
+    # --- Nested composite (tests nested action bars) --------------------------
+    - name: Nested composite
+      uses: ./.github/actions/inner-composite
+      with:
+        lines_per_step: "5000"
+
+    # --- Skipped-step noise (~20 skipped bars, like check-spelling) -----------
+    # These all evaluate to false and render as skipped (Ø) action bars. Used to
+    # validate the "skipped action steps create visual noise" item.
+    - name: Skipped 01
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 02
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 03
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 04
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 05
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 06
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 07
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 08
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 09
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 10
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 11
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 12
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 13
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 14
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 15
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 16
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 17
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 18
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 19
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+    - name: Skipped 20
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+
+    # --- Continue-on-error (tests the warning-over-check badge) ---------------
+    # Fails, but continue-on-error keeps the job green. Produces outcome=failure
+    # + conclusion=success, which is the exact state that renders the
+    # continue-on-error overlay icon.
+    - name: Continue on error (fails but continues)
+      continue-on-error: true
+      shell: bash
+      run: |
+        echo "This composite step fails but is allowed to continue"
+        exit 1
+
+    # --- Prefix regression (github/c2c-actions-support#6249) ------------------
+    # Single-bracket prefixes that regressed. Eyeball how these render/colour.
+    - name: Prefix regression samples
+      shell: bash
+      run: |
+        echo "[Info] this is an info-prefixed line"
+        echo "[Error] this is an error-prefixed line"
+        echo "[Warning] this is a warning-prefixed line"
+        echo "[Debug] this is a debug-prefixed line"
+        echo "[Info  ] trailing-space variant"
+        echo "prefixed inline [Error] should not be treated as a command"
+
+    # --- Annotations (warning / notice icons) ---------------------------------
+    - name: Annotations
+      shell: bash
+      run: |
+        echo "::warning title=Composite warning::a warning emitted from the composite action"
+        echo "::notice title=Composite notice::a notice emitted from the composite action"
