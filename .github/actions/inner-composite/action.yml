@@ -1,0 +1,32 @@
+name: Inner composite
+description: >-
+  A nested composite action used by heavy-composite to exercise nested action
+  bars in the workflow-run log viewer.
+
+inputs:
+  lines_per_step:
+    description: Number of log lines each inner step emits.
+    required: false
+    default: "5000"
+
+runs:
+  using: composite
+  steps:
+    - name: Inner step A
+      shell: bash
+      run: |
+        echo "::group::Inner step A output"
+        seq 1 "${{ inputs.lines_per_step }}" | awk '{print "inner-A line " $1 " - nested composite output"}'
+        echo "::endgroup::"
+
+    - name: Inner step B (skipped)
+      if: ${{ false }}
+      shell: bash
+      run: echo "should not run"
+
+    - name: Inner step C
+      shell: bash
+      run: |
+        echo "::group::Inner step C output"
+        seq 1 "${{ inputs.lines_per_step }}" | awk '{print "inner-C line " $1 " - nested composite output"}'
+        echo "::endgroup::"
