@@ -1,0 +1,26 @@
+name: Failing composite
+description: >-
+  A composite action whose middle step genuinely fails (no continue-on-error),
+  used to validate the failure status icon and the auto-expand-on-failure
+  behaviour in the workflow-run log viewer. This action fails by design.
+
+runs:
+  using: composite
+  steps:
+    - name: Passing step before failure
+      shell: bash
+      run: |
+        echo "::group::Setup output"
+        seq 1 200 | awk '{print "setup line " $1}'
+        echo "::endgroup::"
+
+    - name: Failing step
+      shell: bash
+      run: |
+        echo "About to fail on purpose"
+        echo "::error title=Composite failure::this composite step failed"
+        exit 1
+
+    - name: Step after failure (should be skipped)
+      shell: bash
+      run: echo "should not run because a prior step failed"
