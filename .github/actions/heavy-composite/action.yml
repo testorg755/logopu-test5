@@ -9,6 +9,11 @@ inputs:
     description: Number of log lines each heavy step emits.
     required: false
     default: "20000"
+  seconds_per_step:
+    description: Approx seconds each heavy step spends streaming its output (keeps
+      the job running long enough to exercise the live-stream log path).
+    required: false
+    default: "15"
 
 runs:
   using: composite
@@ -21,28 +26,64 @@ runs:
       shell: bash
       run: |
         echo "::group::Heavy step 1 output"
-        seq 1 "${{ inputs.lines_per_step }}" | awk '{print "step-1 line " $1 " - lorem ipsum dolor sit amet consectetur adipiscing elit"}'
+        total="${{ inputs.lines_per_step }}"; secs="${{ inputs.seconds_per_step }}"
+        per=$(( total / secs )); [ "$per" -lt 1 ] && per=1
+        for s in $(seq 1 "$secs"); do
+          seq 1 "$per" | awk -v s="$s" '{print "step-1 t=" s "s line " $1 " - lorem ipsum dolor sit amet consectetur adipiscing elit"}'
+          sleep 1
+        done
         echo "::endgroup::"
 
     - name: Heavy step 2
       shell: bash
       run: |
         echo "::group::Heavy step 2 output"
-        seq 1 "${{ inputs.lines_per_step }}" | awk '{print "step-2 line " $1 " - the quick brown fox jumps over the lazy dog"}'
+        total="${{ inputs.lines_per_step }}"; secs="${{ inputs.seconds_per_step }}"
+        per=$(( total / secs )); [ "$per" -lt 1 ] && per=1
+        for s in $(seq 1 "$secs"); do
+          seq 1 "$per" | awk -v s="$s" '{print "step-2 t=" s "s line " $1 " - the quick brown fox jumps over the lazy dog"}'
+          sleep 1
+        done
         echo "::endgroup::"
 
     - name: Heavy step 3
       shell: bash
       run: |
         echo "::group::Heavy step 3 output"
-        seq 1 "${{ inputs.lines_per_step }}" | awk '{print "step-3 line " $1 " - pack my box with five dozen liquor jugs"}'
+        total="${{ inputs.lines_per_step }}"; secs="${{ inputs.seconds_per_step }}"
+        per=$(( total / secs )); [ "$per" -lt 1 ] && per=1
+        for s in $(seq 1 "$secs"); do
+          seq 1 "$per" | awk -v s="$s" '{print "step-3 t=" s "s line " $1 " - pack my box with five dozen liquor jugs"}'
+          sleep 1
+        done
         echo "::endgroup::"
 
-    # --- Nested composite (tests nested action bars) --------------------------
-    - name: Nested composite
-      uses: ./.github/actions/inner-composite
-      with:
-        lines_per_step: "5000"
+    # --- Bracket-prefix regression (github/c2c-actions-support#6249) ----------
+    # These plain lines must render as-is, NOT as info/error/warning/debug
+    # annotations. Commands only count when ##-prefixed and ]-terminated.
+    - name: Bracket-prefix plain text
+      shell: bash
+      run: |
+        echo "[DEBUG_PIPELINE - 11:14:51] Running variables checks"
+        echo "[INFO - 11:14:51] Your build is configured for the following regions: EU-WEST-1"
+        echo "[INFO - 11:14:51] Running in live in EU-WEST-1"
+        echo "[INFO -time]"
+        echo "[INFO - time]"
+        echo "[WARNING -time]"
+        echo "[ERROR - this is an error"
+        echo "[ERROR - time]"
+        echo "[INFO-time]"
+        echo "[INFO]" "this is the info"
+        echo "this is info"
+        echo "[ERROR]" "this is the error"
+        echo "this is error"
+        echo "[WARNING]" "this is the warning"
+        echo "this is warning"
+        echo "##[INFO this is info"
+        echo "##[ERROR this is error"
+        # Sanity: these ARE real commands and should still render as annotations
+        echo "##[warning]a real warning annotation"
+        echo "##[error]a real error annotation"
 
     # --- Skipped-step noise (~20 skipped bars, like check-spelling) -----------
     # These all evaluate to false and render as skipped (Ø) action bars. Used to
@@ -144,12 +185,21 @@ runs:
     - name: Prefix regression samples
       shell: bash
       run: |
+        echo "--- single-bracket: MUST render as plain text ---"
         echo "[Info] this is an info-prefixed line"
         echo "[Error] this is an error-prefixed line"
         echo "[Warning] this is a warning-prefixed line"
         echo "[Debug] this is a debug-prefixed line"
         echo "[Info  ] trailing-space variant"
         echo "prefixed inline [Error] should not be treated as a command"
+        echo "--- real ## commands: MUST still render as annotations ---"
+        echo "##[error]this is a real error"
+        echo "##[warning]this is a real warning"
+        echo "##[notice]this is a real notice"
+        echo "##[debug]this is a real debug line"
+        echo "##[group]a real group"
+        echo "inside the real group"
+        echo "##[endgroup]"
 
     # --- Annotations (warning / notice icons) ---------------------------------
     - name: Annotations
