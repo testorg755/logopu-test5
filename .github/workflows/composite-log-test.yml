@@ -28,14 +28,12 @@ on:
           and exercise the live-stream log path).
         required: false
         default: "15"
-  push:
-    branches: ["**"]
 
 jobs:
   composite-heavy:
     # Adjust the label if your self-hosted runner uses different labels
     # (e.g. [self-hosted, Linux, X64]).
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Run heavy composite
         uses: testorg755/logopu-test5/.github/actions/heavy-composite@main
@@ -47,7 +45,7 @@ jobs:
   # to validate the failure icon + the auto-expand-on-failure behaviour. This job
   # will fail by design; remove it if you only want green runs.
   composite-failure:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Failing composite
         uses: testorg755/logopu-test5/.github/actions/failing-composite@main
