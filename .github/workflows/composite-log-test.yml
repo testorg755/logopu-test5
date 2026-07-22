@@ -1,0 +1,53 @@
+name: Composite log viewer test
+
+# Reproduces github/c2c-actions#9641 scenarios in the workflow-run log viewer.
+# Trigger manually (workflow_dispatch) so you can tune line counts, or on push.
+#
+# The composite actions are consumed from github/private-server — a repo that
+# already exists ON THE LOCAL INSTANCE (change it if you host the actions
+# elsewhere). This keeps everything local: the instance serves its own repo
+# tarballs natively, so there's no github.com action-proxy dependency and no
+# actions/checkout needed. The nested `uses: ./…` inside heavy-composite
+# resolves within that downloaded local repo. The three action dirs
+# (heavy-composite, inner-composite, failing-composite) must all live in that
+# same repo on branch `main`.
+#
+# NOTE: do NOT point these at a public github.com repo (e.g. testorg755/...).
+# Resolution would proxy to github.com but the tarball download from the local
+# instance 500s (same failure seen with actions/checkout).
+
+on:
+  workflow_dispatch:
+    inputs:
+      lines_per_step:
+        description: Log lines per heavy composite step (3 heavy steps total).
+        required: false
+        default: "20000"
+      seconds_per_step:
+        description: Approx seconds each heavy step streams (raise to lengthen the run
+          and exercise the live-stream log path).
+        required: false
+        default: "15"
+  push:
+    branches: ["**"]
+
+jobs:
+  composite-heavy:
+    # Adjust the label if your self-hosted runner uses different labels
+    # (e.g. [self-hosted, Linux, X64]).
+    runs-on: self-hosted
+    steps:
+      - name: Run heavy composite
+        uses: testorg755/logopu-test5/.github/actions/heavy-composite@main
+        with:
+          lines_per_step: ${{ github.event.inputs.lines_per_step || '20000' }}
+          seconds_per_step: ${{ github.event.inputs.seconds_per_step || '15' }}
+
+  # Optional second job: a genuinely failing composite step (no continue-on-error)
+  # to validate the failure icon + the auto-expand-on-failure behaviour. This job
+  # will fail by design; remove it if you only want green runs.
+  composite-failure:
+    runs-on: self-hosted
+    steps:
+      - name: Failing composite
+        uses: testorg755/logopu-test5/.github/actions/failing-composite@main
