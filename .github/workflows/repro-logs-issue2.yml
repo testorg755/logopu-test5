@@ -1,0 +1,34 @@
+
+name: Reproduce Actions live-log 2
+
+on:
+  workflow_dispatch:
+
+jobs:
+  reproduce:
+    runs-on: self-hosted
+    steps:
+      - name: Long collapsed group followed by live output
+        shell: bash
+        run: |
+          # Large collapsed group — exceed the UI's 50-line virtual cluster size.
+          echo "::group::Large collapsed group"
+          for i in $(seq 1 60); do
+            echo "collapsed group line $i"
+            sleep 1
+          done
+          echo "::endgroup::"
+          # Let the initial clusters reach the browser.
+          sleep 5
+          # Live-log markers the parser must render (single-bracket, no "##" prefix):
+          # a [section] header and a [command] line, followed by their output.
+          echo "[section]Running command section"
+          echo "[command]echo command output"
+          echo "command output"
+          # Plain bracketed text that must stay verbatim (regression guard).
+          echo "[INFO - 12:00:00] this should render as plain text"
+          # Keep the step active for observing live rendering.
+          for i in $(seq 1 30); do
+            echo "live output after collapsed group $i"
+            sleep 1
+          done
