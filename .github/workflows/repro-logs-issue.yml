@@ -1,0 +1,28 @@
+name: Reproduce Actions live-log regression
+
+on:
+  workflow_dispatch:
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Long collapsed group followed by live output
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.startGroup('Large collapsed group')
+            // Exceed the UI's 50-line virtual cluster size.
+            for (let i = 1; i <= 120; i++) {
+              core.info(`collapsed group line ${i}`)
+            }
+            core.endGroup()
+            // Let the initial clusters reach the browser.
+            await new Promise(resolve => setTimeout(resolve, 5000))
+            // @actions/exec emits a [command] marker.
+            await exec.exec('bash', ['-c', 'echo command output'])
+            // Keep the step active for observing live rendering.
+            for (let i = 1; i <= 90; i++) {
+              core.info(`live output after collapsed group ${i}`)
+              await new Promise(resolve => setTimeout(resolve, 1000))
+            }
