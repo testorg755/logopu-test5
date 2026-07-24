@@ -6,7 +6,7 @@ on:
 
 jobs:
   reproduce:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Long collapsed group followed by live output
         shell: bash
