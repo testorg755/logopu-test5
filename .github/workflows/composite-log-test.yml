@@ -22,12 +22,12 @@ on:
       lines_per_step:
         description: Log lines per heavy composite step (3 heavy steps total).
         required: false
-        default: "20000"
+        default: "10000"
       seconds_per_step:
         description: Approx seconds each heavy step streams (raise to lengthen the run
           and exercise the live-stream log path).
         required: false
-        default: "15"
+        default: "10000"
 
 jobs:
   composite-heavy:
