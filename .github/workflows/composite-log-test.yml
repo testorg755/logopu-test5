@@ -22,12 +22,12 @@ on:
       lines_per_step:
         description: Log lines per heavy composite step (3 heavy steps total).
         required: false
-        default: "10000"
+        default: "1000"
       seconds_per_step:
         description: Approx seconds each heavy step streams (raise to lengthen the run
           and exercise the live-stream log path).
         required: false
-        default: "10000"
+        default: "1000"
 
 jobs:
   composite-heavy:
@@ -38,13 +38,13 @@ jobs:
       - name: Run heavy composite
         uses: testorg755/logopu-test5/.github/actions/heavy-composite@main
         with:
-          lines_per_step: ${{ github.event.inputs.lines_per_step || '10000' }}
-          seconds_per_step: ${{ github.event.inputs.seconds_per_step || '10000' }}
+          lines_per_step: ${{ github.event.inputs.lines_per_step || '1000' }}
+          seconds_per_step: ${{ github.event.inputs.seconds_per_step || '1000' }}
 
       - name: Run heavy composite
         uses: testorg755/logopu-test5/.github/actions/heavy-composite@main
         with:
-          lines_per_step: ${{ github.event.inputs.lines_per_step || '10000' }}
-          seconds_per_step: ${{ github.event.inputs.seconds_per_step || '10000' }}
+          lines_per_step: ${{ github.event.inputs.lines_per_step || '1000' }}
+          seconds_per_step: ${{ github.event.inputs.seconds_per_step || '1000' }}
 
 
