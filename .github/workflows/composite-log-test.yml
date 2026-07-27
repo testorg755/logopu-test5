@@ -38,14 +38,13 @@ jobs:
       - name: Run heavy composite
         uses: testorg755/logopu-test5/.github/actions/heavy-composite@main
         with:
-          lines_per_step: ${{ github.event.inputs.lines_per_step || '20000' }}
-          seconds_per_step: ${{ github.event.inputs.seconds_per_step || '15' }}
+          lines_per_step: ${{ github.event.inputs.lines_per_step || '10000' }}
+          seconds_per_step: ${{ github.event.inputs.seconds_per_step || '10000' }}
 
-  # Optional second job: a genuinely failing composite step (no continue-on-error)
-  # to validate the failure icon + the auto-expand-on-failure behaviour. This job
-  # will fail by design; remove it if you only want green runs.
-  composite-failure:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Failing composite
-        uses: testorg755/logopu-test5/.github/actions/failing-composite@main
+      - name: Run heavy composite
+        uses: testorg755/logopu-test5/.github/actions/heavy-composite@main
+        with:
+          lines_per_step: ${{ github.event.inputs.lines_per_step || '10000' }}
+          seconds_per_step: ${{ github.event.inputs.seconds_per_step || '10000' }}
+
+
